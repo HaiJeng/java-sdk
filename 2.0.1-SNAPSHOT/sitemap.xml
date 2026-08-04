@@ -29,6 +29,18 @@
          <lastmod>2026-08-04</lastmod>
     </url>
     <url>
+         <loc>https://modelcontextprotocol.github.io/java-sdk/2.0.1-SNAPSHOT/aegis/INDEX/</loc>
+         <lastmod>2026-08-04</lastmod>
+    </url>
+    <url>
+         <loc>https://modelcontextprotocol.github.io/java-sdk/2.0.1-SNAPSHOT/aegis/plans/2026-08-04-httpclient-closer-wiring-and-injection/</loc>
+         <lastmod>2026-08-04</lastmod>
+    </url>
+    <url>
+         <loc>https://modelcontextprotocol.github.io/java-sdk/2.0.1-SNAPSHOT/aegis/specs/2026-08-04-httpclient-lifecycle-injection-brief/</loc>
+         <lastmod>2026-08-04</lastmod>
+    </url>
+    <url>
          <loc>https://modelcontextprotocol.github.io/java-sdk/2.0.1-SNAPSHOT/blog/</loc>
          <lastmod>2026-08-04</lastmod>
     </url>

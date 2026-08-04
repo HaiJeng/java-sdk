@@ -1,0 +1,1299 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Java SDK for the Model Context Protocol - standardized integration between AI models and tools">
+      
+      
+      
+        <link rel="canonical" href="https://modelcontextprotocol.github.io/java-sdk/2.0.1-SNAPSHOT/aegis/specs/2026-08-04-httpclient-lifecycle-injection-brief/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../images/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Spec Brief: HttpClient 生命周期管理 + 外部注入 - MCP Java SDK</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="blue-grey">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#spec-brief-httpclient" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="MCP Java SDK" class="md-header__button md-logo" aria-label="MCP Java SDK" data-md-component="logo">
+      
+  <img src="../../../images/logo-light.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MCP Java SDK
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Spec Brief: HttpClient 生命周期管理 + 外部注入
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="blue-grey"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="blue-grey"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/modelcontextprotocol/java-sdk" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    modelcontextprotocol/java-sdk
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../contribute/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://javadoc.io/doc/io.modelcontextprotocol.sdk/mcp-core/2.0.0" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="MCP Java SDK" class="md-nav__button md-logo" aria-label="MCP Java SDK" data-md-component="logo">
+      
+  <img src="../../../images/logo-light.svg" alt="logo">
+
+    </a>
+    MCP Java SDK
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/modelcontextprotocol/java-sdk" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    modelcontextprotocol/java-sdk
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Components
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MCP Components
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://javadoc.io/doc/io.modelcontextprotocol.sdk/mcp-core/2.0.0" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 背景与问题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 目标
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 非目标
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 方案设计
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 方案设计">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-transport-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 两个 transport 的对称改法（每个 3 处 + 字段）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 已确认的设计决策
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 影响文件清单（scope 边界）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 验收标准
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 风险与权衡
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-writing-plans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 开放项（留待 writing-plans）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-taskintentdraft" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        附录 A: TaskIntentDraft
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b-baselineusagedraft" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        附录 B: BaselineUsageDraft
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c-impactstatementdraft" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        附录 C: ImpactStatementDraft
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-adr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        附录 D: ADR 信号
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="spec-brief-httpclient">Spec Brief: HttpClient 生命周期管理 + 外部注入<a class="headerlink" href="#spec-brief-httpclient" title="Permanent link">&para;</a></h1>
+<ul>
+<li>日期: <code>2026-08-04</code></li>
+<li>状态: <code>待用户 review</code></li>
+<li>类型: Spec Brief（medium，fork 内部使用）</li>
+<li>涉及模块: <code>mcp-core</code> — <code>client/transport</code></li>
+<li>关联: 上游 issue #547（HttpClient 从不被关闭，资源泄漏）</li>
+</ul>
+<hr />
+<h2 id="1">1. 背景与问题<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<p>两个客户端 transport 类各自在 <code>Builder.build()</code> 里 <code>HttpClient.Builder.build()</code> 出一个
+<code>java.net.http.HttpClient</code> 实例，存为 <code>private final HttpClient httpClient</code> 字段。问题有二：</p>
+<ol>
+<li><strong>无法注入外部 HttpClient</strong>：调用方无法复用已有的 HttpClient（连接池、认证、代理、自定义
+   <code>Executor</code> 等），每个 transport 强制新建一个。</li>
+<li>
+<p><strong>HttpClient 资源泄漏（#547）</strong>：<code>closeGracefully()</code> 从不关闭内部 HttpClient。</p>
+</li>
+<li>
+<p><code>HttpClientSseClientTransport#closeGracefully()</code>（:505-513）：只置 <code>isClosing</code> + dispose SSE
+     subscription。</p>
+</li>
+<li><code>HttpClientStreamableHttpTransport#closeGracefully()</code>（:232-243）：只 close transport session。</li>
+<li>全 repo 零处 <code>httpClient.close()</code> 调用（已搜证）。对比 <code>StdioClientTransport#closeGracefully()</code>
+     会 <code>process.destroy()</code> + dispose 3 个 scheduler —— 印证 HttpClient 不被关是异常，不是设计意图。</li>
+</ol>
+<p><strong>根因约束</strong>：<code>java.net.http.HttpClient.close()</code> 是 <strong>Java 21+</strong> 才有的方法（Java 21 起
+HttpClient 才 implements <code>AutoCloseable</code>）。本 SDK <code>pom.xml:57</code> 锁 <code>&lt;java.version&gt;17&lt;/java.version&gt;</code>，
+所以无法直接写 <code>httpClient.close()</code> —— 这正是 #547 至今未修的技术根因之一。</p>
+<h2 id="2">2. 目标<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>目标</th>
+<th>验证方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G1</td>
+<td>支持向两个 transport 注入外部 HttpClient</td>
+<td>单测：注入 mock/spy HttpClient，断言它被实际使用</td>
+</tr>
+<tr>
+<td>G2</td>
+<td>修复内部 HttpClient 的资源泄漏（JDK ≥21 运行时）</td>
+<td>单测：内部构建的 HC，closeGracefully 后反射验证 close() 被调用</td>
+</tr>
+<tr>
+<td>G3</td>
+<td>向后兼容：不注入时行为与现状完全一致</td>
+<td>现有用例不回归</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3">3. 非目标<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>不</strong>升 Java 基线（保持 <code>java.version=17</code>，不动 pom / CI / 文档 / 版本号）。</li>
+<li><strong>不</strong>修复 JDK 17–20 运行时的 selector 线程 GC 语义 —— 反射降级为 debug 日志 + 靠 GC，这是
+  Java 21 前HttpClient 的既定行为，本 spec 接受。</li>
+<li><strong>不</strong>向上游发 PR（受 <code>AGENTS.md</code> AI-agent 贡献策略约束）。本改动为 fork 内部使用。</li>
+<li><strong>不</strong>改动 <code>clientBuilder()</code> / <code>customizeClient()</code> / <code>connectTimeout()</code> 的现有语义或签名。</li>
+</ul>
+<h2 id="4">4. 方案设计<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<p><strong>核心思路</strong>：<code>Builder</code> 新增 <code>httpClient(HttpClient)</code> 注入口；transport 持有 <code>externalClient</code>
+布尔字段区分"外部注入 / 内部构建"；<code>closeGracefully()</code> 用反射调 <code>HttpClient.close()</code> 关闭内部
+HttpClient，外部注入的不关。反射让编译目标保持 Java 17，运行时 ≥21 才真正生效。</p>
+<h3 id="41-transport-3">4.1 两个 transport 的对称改法（每个 3 处 + 字段）<a class="headerlink" href="#41-transport-3" title="Permanent link">&para;</a></h3>
+<p><strong>(a) Builder 加注入口</strong></p>
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// HttpClientSseClientTransport.Builder / HttpClientStreamableHttpTransport.Builder 各加</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kd">private</span><span class="w"> </span><span class="n">HttpClient</span><span class="w"> </span><span class="n">httpClient</span><span class="p">;</span><span class="w"> </span><span class="c1">// null = 走原 clientBuilder 路径（默认，向后兼容）</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="cm">/**</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="cm"> * 注入一个外部 HttpClient。注入后，{@link #clientBuilder(HttpClient.Builder)}、</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="cm"> * {@link #customizeClient(Consumer)}、{@link #connectTimeout(Duration)} 将被忽略</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="cm"> * （注入优先），且该 HttpClient 的生命周期由调用方管理 —— closeGracefully() 不会关闭它。</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="cm"> */</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="kd">public</span><span class="w"> </span><span class="n">Builder</span><span class="w"> </span><span class="nf">httpClient</span><span class="p">(</span><span class="n">HttpClient</span><span class="w"> </span><span class="n">httpClient</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="n">Assert</span><span class="p">.</span><span class="na">notNull</span><span class="p">(</span><span class="n">httpClient</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;httpClient must not be null&quot;</span><span class="p">);</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">httpClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">httpClient</span><span class="p">;</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">}</span>
+</span></code></pre></div>
+<p><strong>(b) <code>build()</code> 判断注入 vs 内部构建</strong></p>
+<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// SSE build()（原 :333-338）</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">public</span><span class="w"> </span><span class="n">HttpClientSseClientTransport</span><span class="w"> </span><span class="nf">build</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="kt">boolean</span><span class="w"> </span><span class="n">externalClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">httpClient</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">HttpClient</span><span class="w"> </span><span class="n">httpClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">externalClient</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">httpClient</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">clientBuilder</span><span class="p">.</span><span class="na">connectTimeout</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="na">connectTimeout</span><span class="p">).</span><span class="na">build</span><span class="p">();</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HttpClientSseClientTransport</span><span class="p">(</span><span class="n">httpClient</span><span class="p">,</span><span class="w"> </span><span class="n">requestBuilder</span><span class="p">,</span><span class="w"> </span><span class="n">baseUri</span><span class="p">,</span><span class="w"> </span><span class="n">sseEndpoint</span><span class="p">,</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">            </span><span class="n">jsonMapper</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">McpJsonDefaults</span><span class="p">.</span><span class="na">getMapper</span><span class="p">()</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">jsonMapper</span><span class="p">,</span><span class="w"> </span><span class="n">httpRequestCustomizer</span><span class="p">,</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">            </span><span class="n">messageEndpointValidator</span><span class="p">,</span><span class="w"> </span><span class="n">externalClient</span><span class="p">);</span><span class="w"> </span><span class="c1">// 末尾新增参数</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Streamable 的 <code>build()</code>（原 :933-938）同理，<code>externalClient</code> 传入私有构造的末尾参数。</p>
+<p><strong>(c) transport 加 <code>externalClient</code> 字段 + 构造参数</strong></p>
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">externalClient</span><span class="p">;</span><span class="w"> </span><span class="c1">// true = 外部注入，不归本 transport 管 lifecycle</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1">// 构造函数末尾新增 boolean externalClient 参数并赋值</span>
+</span></code></pre></div>
+<ul>
+<li>SSE 构造是 package-private（:144），Streamable 构造是 <code>private</code>（:141）—— 加参数<strong>不破坏公开 API</strong>。</li>
+</ul>
+<p><strong>(d) <code>closeGracefully()</code> 反射关内部 HttpClient</strong></p>
+<p>反射逻辑示意（每个 transport 在自己的 <code>closeGracefully()</code> 末尾内联；是否抽公共 util 见 §8
+开放项 1）：</p>
+<div class="highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// SSE closeGracefully()（原 :505-513），在现有 isClosing / dispose 逻辑后追加：</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1">// Streamable closeGracefully()（原 :232-243），在 session.closeGracefully() 链后同理追加：</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">externalClient</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">        </span><span class="n">HttpClient</span><span class="p">.</span><span class="na">class</span><span class="p">.</span><span class="na">getMethod</span><span class="p">(</span><span class="s">&quot;close&quot;</span><span class="p">).</span><span class="na">invoke</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="na">httpClient</span><span class="p">);</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">NoSuchMethodException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">        </span><span class="n">logger</span><span class="p">.</span><span class="na">debug</span><span class="p">(</span><span class="s">&quot;HttpClient.close() unavailable on JDK {}; relying on GC for cleanup&quot;</span><span class="p">,</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">                </span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">&quot;java.version&quot;</span><span class="p">));</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">java</span><span class="p">.</span><span class="na">lang</span><span class="p">.</span><span class="na">reflect</span><span class="p">.</span><span class="na">InvocationTargetException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">        </span><span class="n">logger</span><span class="p">.</span><span class="na">warn</span><span class="p">(</span><span class="s">&quot;HttpClient.close() threw&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="na">getCause</span><span class="p">());</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">        </span><span class="n">logger</span><span class="p">.</span><span class="na">warn</span><span class="p">(</span><span class="s">&quot;Failed to close HttpClient&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">);</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="42">4.2 已确认的设计决策<a class="headerlink" href="#42" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>决策</th>
+<th>选择</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>注入 HC 时 <code>clientBuilder</code>/<code>customizeClient</code>/<code>connectTimeout</code> 的处理</td>
+<td><strong>静默忽略 + javadoc 声明优先级</strong>（注入优先）</td>
+<td><code>clientBuilder</code> 字段有默认值（非 null），无法用 null 判断"是否被设过"；加 Assert 需引入额外 flag，违反最小 API 表面</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>JDK&lt;21 反射找不到 <code>close()</code> 时</td>
+<td><strong><code>debug</code> 日志 + 靠 GC</strong></td>
+<td>预期降级非错误；21+ 运行时日志干净，17–20 运行时 debug 可见</td>
+</tr>
+<tr>
+<td>D3</td>
+<td><code>externalClient</code> 字段位置</td>
+<td><strong>进 transport 构造函数</strong></td>
+<td>让 <code>closeGracefully</code> 守卫语义自解释，不靠注释；构造非 public，无 API 破坏</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Java 基线</td>
+<td><strong>保持 17，走反射</strong>（方案 B）</td>
+<td>避免升基线的连锁改动（pom/CI/文档/版本号）；fork 内部使用</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-scope">5. 影响文件清单（scope 边界）<a class="headerlink" href="#5-scope" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>改动</th>
+<th>行数估计</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mcp-core/.../HttpClientSseClientTransport.java</code></td>
+<td>Builder 字段+方法、build()、构造参数、externalClient 字段、closeGracefully 反射</td>
+<td>~15-20 行</td>
+</tr>
+<tr>
+<td><code>mcp-core/.../HttpClientStreamableHttpTransport.java</code></td>
+<td>同上（对称）</td>
+<td>~15-20 行</td>
+</tr>
+<tr>
+<td><strong>不改</strong>: <code>pom.xml</code>、CI workflow、<code>CLAUDE.md</code>/<code>AGENTS.md</code>/<code>CONTRIBUTING.md</code>、版本号</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>改动量估计</strong>：两个文件合计约 30-40 行（含 javadoc 与反射样板）。反射样板若抽到公共 util 可更省，
+但会新增一个公开/包内入口 —— 留待 writing-plans 阶段权衡（见 §6）。</p>
+<h2 id="6">6. 验收标准<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>注入路径</strong>：<code>.httpClient(hc)</code> 后，transport 内部 <code>sendAsync</code> 等调用走传入的 <code>hc</code> 实例。</li>
+<li><strong>向后兼容</strong>：不调 <code>.httpClient(...)</code> 时，<code>build()</code> 行为与现状逐字一致（走 <code>clientBuilder</code>）。</li>
+<li><strong>泄漏修复（内部 HC，JDK≥21 运行时）</strong>：<code>closeGracefully()</code> 后，反射验证 <code>HttpClient.close()</code>
+   被调用一次。</li>
+<li><strong>外部 HC 不被关</strong>：<code>.httpClient(hc)</code> 注入后，<code>closeGracefully()</code> <strong>不</strong>调用 <code>hc.close()</code>。</li>
+<li><strong>JDK&lt;21 降级</strong>：反射抛 <code>NoSuchMethodException</code> 时打 <code>debug</code> 日志，<strong>不</strong>抛异常、<strong>不</strong> <code>warn</code>。</li>
+<li><strong>两 transport 对称</strong>：上述 1–5 行为在 SSE 和 Streamable 上一致。</li>
+</ol>
+<p>测试落位：<code>mcp-test</code> 模块（按 <code>CLAUDE.md</code>，需要真实 JSON 序列化的集成测试放 mcp-test；纯反射逻辑的
+单测可放 <code>mcp-core</code> 的 test，但 HttpClient 行为验证倾向 mcp-test）。具体落位在 writing-plans 定。</p>
+<h2 id="7">7. 风险与权衡<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>风险</th>
+<th>严重度</th>
+<th>缓解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HttpClient.close()</code>（Java 21）可能短暂阻塞等待 in-flight 请求</td>
+<td>中</td>
+<td><code>closeGracefully()</code> 返回 <code>Mono&lt;Void&gt;</code>，调用方可异步订阅；是否需 <code>subscribeOn(boundedElastic)</code> 在 writing-plans 定</td>
+</tr>
+<tr>
+<td>反射 <code>InvocationTargetException</code> 吞掉真实异常</td>
+<td>低</td>
+<td>显式 unwrap <code>getCause()</code> 并 <code>warn</code>（见 4.1d 代码）</td>
+</tr>
+<tr>
+<td>SSE transport 已 <code>@Deprecated</code></td>
+<td>低</td>
+<td>fork 内部仍在用，改动值得；与 Streamable 保持对称降低维护负担</td>
+</tr>
+<tr>
+<td>运行时 JDK&lt;21 时修复"名义生效实际靠 GC"</td>
+<td>中</td>
+<td>spec 据实声明（§3 非目标）；用户未指定运行时版本，反射方案跨版本自适应</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-writing-plans">8. 开放项（留待 writing-plans）<a class="headerlink" href="#8-writing-plans" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>反射样板抽不抽公共 util</strong>：两处重复 ~10 行。抽 util 新增一个包内/公开入口（需过"最小 API 表面"
+  审视）；内联则两份重复。倾向先内联，若 review 认为重复刺眼再抽。</li>
+<li><strong>closeGracefully 是否切线程</strong>：见 §7 风险 1。</li>
+<li><strong>测试落位</strong>：mcp-core test vs mcp-test，见 §6。</li>
+</ul>
+<hr />
+<h2 id="a-taskintentdraft">附录 A: TaskIntentDraft<a class="headerlink" href="#a-taskintentdraft" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>结果（Outcome）</strong>：两个 transport 支持注入外部 HttpClient；内部 HttpClient 在 JDK≥21 运行时被
+  正确关闭。</li>
+<li><strong>目标（Goal）</strong>：G1 注入口 + G2 修泄漏 + G3 向后兼容（见 §2）。</li>
+<li><strong>成功证据（Success evidence）</strong>：§6 验收标准 1–6 全部通过。</li>
+<li><strong>停止条件（Stop condition）</strong>：§6 六条验收达成 + 现有用例不回归。</li>
+<li><strong>非目标（Non-goals）</strong>：§3。</li>
+<li><strong>范围（Scope）</strong>：仅两个 transport 类（§5）。</li>
+<li><strong>风险（Risks）</strong>：§7。</li>
+</ul>
+<h2 id="b-baselineusagedraft">附录 B: BaselineUsageDraft<a class="headerlink" href="#b-baselineusagedraft" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Required baseline refs</strong>: <code>CLAUDE.md</code>（Java 17+ / 模块拓扑 / 最小 API 表面）、<code>AGENTS.md</code>
+  （AI-agent 贡献策略）、<code>pom.xml:57</code>（java.version=17）。</li>
+<li><strong>Delivered context refs</strong>: 两个 transport 源文件全文、<code>StdioClientTransport#closeGracefully()</code>、
+  全 repo <code>httpClient.close</code> 搜索结果（零匹配）。</li>
+<li><strong>Acknowledged before plan refs</strong>: <code>VERSIONING.md</code>（升 LTS 算破坏性 → 本方案规避）、
+  <code>CONTRIBUTING.md</code>（record 演进规则 → 本方案不触及 McpSchema，不适用）。</li>
+<li><strong>Cited in design refs</strong>: 见 §1、§4 行号引用。</li>
+<li><strong>Missing refs</strong>: 上游 #547 issue 的确切描述（repo 内无引用，基于代码行为推断；与用户陈述一致）。</li>
+<li><strong>Decision</strong>: <code>continue</code>（约束已坐实，设计可推进）。</li>
+</ul>
+<h2 id="c-impactstatementdraft">附录 C: ImpactStatementDraft<a class="headerlink" href="#c-impactstatementdraft" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Affected layers</strong>: <code>mcp-core</code> / <code>client/transport</code>，两个文件。</li>
+<li><strong>Owners</strong>: fork 内部，无跨 owner 协调。</li>
+<li><strong>Invariants</strong>:</li>
+<li>不注入时 <code>build()</code> 行为逐字不变（向后兼容）。</li>
+<li><code>closeGracefully()</code> 对外部 HttpClient 零触碰。</li>
+<li>Java 17 编译目标不变。</li>
+<li><strong>Compat</strong>: 向后兼容（新增 Builder 方法 + 构造末尾参数；构造非 public）。无签名删除、无语义反转。</li>
+<li><strong>Non-goals</strong>: §3。</li>
+</ul>
+<h2 id="d-adr">附录 D: ADR 信号<a class="headerlink" href="#d-adr" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>信号类型</strong>: 轻量公开契约扩展（新增 <code>Builder.httpClient(HttpClient)</code> 公开方法 + transport
+  私有 <code>externalClient</code> 字段）。</li>
+<li><strong>是否需正式 ADR</strong>: 否。fork 内部使用、Spec Brief 级、向后兼容（无签名删除/语义反转）。</li>
+<li><strong>决策回填点</strong>（若将来 fork 对外发布或升 Java 基线时补 ADR）：</li>
+<li><strong>为何反射而非升 <code>java.version</code> 到 21</strong>：升基线连锁 pom/CI/文档/版本号，fork 内部不需要；
+    反射方案编译目标保 17、运行时 ≥21 确定生效、&lt;21 优雅降级。</li>
+<li><strong><code>externalClient</code> 字段的语义边界</strong>：外部注入 = 调用方全权管理 HC lifecycle，transport
+    <code>closeGracefully()</code> 零触碰。</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/modelcontextprotocol/java-sdk" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.path", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.tabs.link"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": ["latest-snapshot", "latest"], "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
