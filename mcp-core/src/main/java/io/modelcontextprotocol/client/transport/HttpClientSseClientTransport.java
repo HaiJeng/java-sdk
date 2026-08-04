@@ -100,6 +100,13 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 	 */
 	private final HttpClient httpClient;
 
+	/**
+	 * true = 外部注入的
+	 * HttpClient（{@code Builder.httpClient(HttpClient)}），生命周期由调用方管理，closeGracefully
+	 * 不关闭；false = 内部构建，closeGracefully 经 {@link HttpClientCloser} 反射关闭
+	 */
+	private final boolean externalClient;
+
 	/** HTTP request builder for building requests to send messages to the server */
 	private final HttpRequest.Builder requestBuilder;
 
@@ -143,7 +150,7 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 	 */
 	HttpClientSseClientTransport(HttpClient httpClient, HttpRequest.Builder requestBuilder, String baseUri,
 			String sseEndpoint, McpJsonMapper jsonMapper, McpAsyncHttpClientRequestCustomizer httpRequestCustomizer,
-			SseMessageEndpointValidator messageEndpointValidator) {
+			SseMessageEndpointValidator messageEndpointValidator, boolean externalClient) {
 		Assert.notNull(jsonMapper, "jsonMapper must not be null");
 		Assert.hasText(baseUri, "baseUri must not be empty");
 		Assert.hasText(sseEndpoint, "sseEndpoint must not be empty");
@@ -158,6 +165,7 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 		this.requestBuilder = requestBuilder;
 		this.httpRequestCustomizer = httpRequestCustomizer;
 		this.messageEndpointValidator = messageEndpointValidator;
+		this.externalClient = externalClient;
 	}
 
 	@Override
@@ -192,6 +200,8 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 		private McpAsyncHttpClientRequestCustomizer httpRequestCustomizer = McpAsyncHttpClientRequestCustomizer.NOOP;
 
 		private Duration connectTimeout = Duration.ofSeconds(10);
+
+		private HttpClient httpClient; // null = 走原 clientBuilder 路径（默认，向后兼容）
 
 		private SseMessageEndpointValidator messageEndpointValidator = new DefaultSseMessageEndpointValidator();
 
@@ -315,6 +325,19 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 		}
 
 		/**
+		 * 注入一个外部 {@link HttpClient}。注入后，{@link #clientBuilder(HttpClient.Builder)}、
+		 * {@link #customizeClient(Consumer)} 与 {@link #connectTimeout(Duration)}
+		 * 将被忽略（注入优先）， 且该 HttpClient 的生命周期由调用方管理 —— {@link #closeGracefully()} 不会关闭它。
+		 * @param httpClient the external HttpClient to inject
+		 * @return this builder
+		 */
+		public Builder httpClient(HttpClient httpClient) {
+			Assert.notNull(httpClient, "httpClient must not be null");
+			this.httpClient = httpClient;
+			return this;
+		}
+
+		/**
 		 * Sets the validator that ensure the message endpoint returned over the SSE
 		 * connection is valid.
 		 * @param messageEndpointValidator the validator
@@ -331,10 +354,12 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 		 * @return a new transport instance
 		 */
 		public HttpClientSseClientTransport build() {
-			HttpClient httpClient = this.clientBuilder.connectTimeout(this.connectTimeout).build();
+			boolean externalClient = this.httpClient != null;
+			HttpClient httpClient = externalClient ? this.httpClient
+					: this.clientBuilder.connectTimeout(this.connectTimeout).build();
 			return new HttpClientSseClientTransport(httpClient, requestBuilder, baseUri, sseEndpoint,
 					jsonMapper == null ? McpJsonDefaults.getMapper() : jsonMapper, httpRequestCustomizer,
-					messageEndpointValidator);
+					messageEndpointValidator, externalClient);
 		}
 
 	}
@@ -509,6 +534,9 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 			Disposable subscription = sseSubscription.get();
 			if (subscription != null && !subscription.isDisposed()) {
 				subscription.dispose();
+			}
+			if (!externalClient) {
+				HttpClientCloser.close(httpClient);
 			}
 		});
 	}

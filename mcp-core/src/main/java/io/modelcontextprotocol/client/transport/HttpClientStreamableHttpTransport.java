@@ -93,6 +93,13 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 	 */
 	private final HttpClient httpClient;
 
+	/**
+	 * true = 外部注入的
+	 * HttpClient（{@code Builder.httpClient(HttpClient)}），生命周期由调用方管理，closeGracefully
+	 * 不关闭；false = 内部构建，closeGracefully 经 {@link HttpClientCloser} 反射关闭
+	 */
+	private final boolean externalClient;
+
 	/** HTTP request builder for building requests to send messages to the server */
 	private final HttpRequest.Builder requestBuilder;
 
@@ -142,7 +149,7 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 			HttpRequest.Builder requestBuilder, String baseUri, String endpoint, boolean resumableStreams,
 			boolean openConnectionOnStartup, McpAsyncHttpClientRequestCustomizer httpRequestCustomizer,
 			McpHttpClientTransportAuthorizationErrorHandler authorizationErrorHandler,
-			List<String> supportedProtocolVersions) {
+			List<String> supportedProtocolVersions, boolean externalClient) {
 		this.jsonMapper = jsonMapper;
 		this.httpClient = httpClient;
 		this.requestBuilder = requestBuilder;
@@ -158,6 +165,7 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 			.sorted(Comparator.reverseOrder())
 			.findFirst()
 			.get();
+		this.externalClient = externalClient;
 	}
 
 	@Override
@@ -235,10 +243,15 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 			logger.debug("Graceful close triggered");
 			McpTransportSession<Disposable> currentSession = this.activeSession
 				.getAndSet(ClosedMcpTransportSession.INSTANCE);
-			if (currentSession != null) {
-				return Mono.from(currentSession.closeGracefully());
-			}
-			return Mono.empty();
+			Mono<Void> sessionClose = (currentSession != null) ? Mono.from(currentSession.closeGracefully())
+					: Mono.empty();
+			// 先让 session 清理（createDelete 等用 httpClient 的 in-flight 操作）完成，再关 httpClient，
+			// 否则 createDelete 的 sendAsync 会拿到 "closed"。
+			return sessionClose.then(Mono.fromRunnable(() -> {
+				if (!externalClient) {
+					HttpClientCloser.close(httpClient);
+				}
+			}));
 		});
 	}
 
@@ -722,6 +735,8 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 
 		private Duration connectTimeout = Duration.ofSeconds(10);
 
+		private HttpClient httpClient; // null = 走原 clientBuilder 路径（默认，向后兼容）
+
 		private List<String> supportedProtocolVersions = List.of(ProtocolVersions.MCP_2024_11_05,
 				ProtocolVersions.MCP_2025_03_26, ProtocolVersions.MCP_2025_06_18, ProtocolVersions.MCP_2025_11_25);
 
@@ -902,6 +917,19 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 		}
 
 		/**
+		 * 注入一个外部 {@link HttpClient}。注入后，{@link #clientBuilder(HttpClient.Builder)}、
+		 * {@link #customizeClient(Consumer)} 与 {@link #connectTimeout(Duration)}
+		 * 将被忽略（注入优先）， 且该 HttpClient 的生命周期由调用方管理 —— {@link #closeGracefully()} 不会关闭它。
+		 * @param httpClient the external HttpClient to inject
+		 * @return this builder
+		 */
+		public Builder httpClient(HttpClient httpClient) {
+			Assert.notNull(httpClient, "httpClient must not be null");
+			this.httpClient = httpClient;
+			return this;
+		}
+
+		/**
 		 * Sets the list of supported protocol versions used in version negotiation. By
 		 * default, the client will send the latest of those versions in the
 		 * {@code MCP-Protocol-Version} header.
@@ -931,10 +959,12 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 		 * @return a new instance of {@link HttpClientStreamableHttpTransport}
 		 */
 		public HttpClientStreamableHttpTransport build() {
-			HttpClient httpClient = this.clientBuilder.connectTimeout(this.connectTimeout).build();
+			boolean externalClient = this.httpClient != null;
+			HttpClient httpClient = externalClient ? this.httpClient
+					: this.clientBuilder.connectTimeout(this.connectTimeout).build();
 			return new HttpClientStreamableHttpTransport(jsonMapper == null ? McpJsonDefaults.getMapper() : jsonMapper,
 					httpClient, requestBuilder, baseUri, endpoint, resumableStreams, openConnectionOnStartup,
-					httpRequestCustomizer, authorizationErrorHandler, supportedProtocolVersions);
+					httpRequestCustomizer, authorizationErrorHandler, supportedProtocolVersions, externalClient);
 		}
 
 	}
