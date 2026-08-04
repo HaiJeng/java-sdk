@@ -70,7 +70,7 @@
 		<logback.version>1.5.15</logback.version>
 		<jackson-annotations.version>2.21</jackson-annotations.version>
 		<jackson2.version>2.21.1</jackson2.version>
-		<jackson3.version>3.1.4</jackson3.version>
+		<jackson3.version>3.0.3</jackson3.version> <!-- fork: 锁定回 3.0.3 匹配 mcp-stdio 2.0.0（3.1.4 引入 JsonSerializeAs 与 jackson2 annotations 冲突） -->
 		<springframework.version>6.2.1</springframework.version>
 
 		<!-- plugin versions -->
